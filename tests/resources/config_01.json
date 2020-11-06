@@ -1,0 +1,11 @@
+{
+  "server": {
+    "url": "http://www.site.com",
+    "resources": {
+      "mem": 2048
+    }
+  },
+  "name": "myname",
+  "id": 12345,
+  "tags": ["server", "api"]
+}

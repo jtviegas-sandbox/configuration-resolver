@@ -1,0 +1,13 @@
+[build-system]
+requires = [
+"flit_core >=2,<4",
+"azure.identity",
+"azure-keyvault-secrets"
+]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "config_resolver"
+author = "jtviegas"
+author-email = "jtviegas.js@gmail.com"
+
