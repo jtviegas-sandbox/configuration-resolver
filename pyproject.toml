@@ -41,9 +41,13 @@ requires = [
 build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
+home-page = "https://github.com/jtviegas/config-resolver"
 module = "config_resolver"
-dist-name = "configuration-resolver"
+dist-name = "config-resolver"
 author = "jtviegas"
 author-email = "jtviegas.js@gmail.com"
 requires-python = ">=3.7"
-
+classifiers = [
+    "License :: OSI Approved :: Unlicense",
+    "Programming Language :: Python :: 3.7",
+]
