@@ -21,7 +21,7 @@ class Singleton:
 class Configuration(Singleton):
 
     @staticmethod
-    def get_instance(filesys_input: Union[list, str], variable_prefix: str = None,
+    def get_instance(filesys_input: Union[list, str],
                 az_keyvault_config: Optional[dict] = None, env_vars=True, base_vars: Optional[dict] = None):
         additional_resolvers = []
         if az_keyvault_config is not None:
@@ -31,15 +31,16 @@ class Configuration(Singleton):
 
         return Configuration(filesys_input, additional_resolvers=additional_resolvers, base_vars=base_vars)
 
-    def __init__(self, filesys_input: Union[list, str], variable_prefix: str = None,
-                 additional_resolvers: list = [], base_vars: Optional[dict] = None):
-        log.info(f"[__init__|in] ({filesys_input},{variable_prefix},{additional_resolvers})")
+    def __init__(self, filesys_input: Union[list, str], additional_resolvers: list = [],
+                 base_vars: Optional[dict] = None):
+        log.info(f"[__init__|in] ({filesys_input},{additional_resolvers},{base_vars})")
 
-        self.__var_prefix = variable_prefix
         self.__input = {'filesys_input': filesys_input}
-        self.__data = base_vars if base_vars is not None else {}
+        self.__data = {}
+        if base_vars is not None:
+            self.__process_base_vars(base_vars)
 
-        self.__data.update(FileSysConfiguration(filesys_input, variable_prefix).read())
+        self.__data.update(FileSysConfiguration(filesys_input).read())
 
         for resolver in additional_resolvers:
             for key in self.__data.keys():
@@ -48,6 +49,19 @@ class Configuration(Singleton):
                     self.__data[key] = _val
 
         log.info(f"[__init__|out]")
+
+    def __process_base_vars(self, base_vars, prefix: str = None) -> dict:
+        log.info(f"[__process_base_vars|in] ({base_vars})")
+        for k in base_vars.keys():
+            value = base_vars[k]
+            input_type = type(value).__name__
+            var_name = f"{'' if prefix is None else prefix.upper() + '_'}{k.upper()}"
+            if input_type == 'dict':
+                self.__process_base_vars(value, var_name)
+
+            log.info(f"[__process_base_vars] adding new config {var_name}: {value}")
+            self.__data[var_name] = value
+        log.info(f"[__process_base_vars|out] => {self.__data}")
 
     def get(self, key: str):
         log.info(f"[get|in] ({key})")
