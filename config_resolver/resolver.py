@@ -1,14 +1,28 @@
 import json
-import os
 import logging
-from typing import Union
+import os
+from abc import ABC, abstractmethod
+from typing import Union, Optional
 
 from config_resolver.azure_keyvault_reader import AzureKeyVaultReader
 
 log = logging.getLogger(__name__)
 
 
-class EnvironmentResolver:
+class AbstractResolver(ABC):
+
+    def _validate_configuration(self, keys: list, config: dict):
+        log.info(f"[_validate_configuration|in] (keys:{keys} config:{[k + ':' + v[0:3] for k, v in config.items()]})")
+        if not set(keys).issubset(set(config.keys())):
+            raise ValueError(f"mandatory config keys not provided: {keys} not a subset of {config.keys()}")
+        log.info(f"[_validate_configuration|out]")
+
+    @abstractmethod
+    def get(self, key) -> str:
+        pass
+
+
+class EnvironmentResolver(AbstractResolver):
 
     def get(self, key) -> str:
         log.info(f"[get|in] ({key})")
@@ -18,15 +32,17 @@ class EnvironmentResolver:
         except KeyError as x:
             log.debug(f"environment variable not found: {key}", exc_info=x)
 
-        log.info(f"[get|out] => {_result if _result is not None else 'None' }")
+        log.info(f"[get|out] => {_result if _result is not None else 'None'}")
         return _result
 
 
-class AzureKeyVaultResolver:
+class AzureKeyVaultResolver(AbstractResolver):
 
-    def __init__(self, tenant_id: str, client_id: str, client_secret: str, vault_url: str):
-        log.info(f"[__init__|in] ({tenant_id},{client_id}, {client_secret[0:3]}..., {vault_url})")
-        self.reader = AzureKeyVaultReader(tenant_id, client_id, client_secret, vault_url)
+    def __init__(self, config: dict):
+        log.info(f"[__init__|in] ({[k + ':' + v[0:3] for k, v in config.items()]}")
+        super()._validate_configuration(['tenant_id', 'client_id', 'vault_url', 'client_secret'], config)
+        self.reader = AzureKeyVaultReader(config['tenant_id'], config['client_id'], config['client_secret'],
+                                          config['vault_url'])
         log.info(f"[__init__|out]")
 
     def get(self, key) -> str:
@@ -37,23 +53,32 @@ class AzureKeyVaultResolver:
             _result = self.reader.get_secret(_key)
         except Exception as x:
             log.debug(f"secret not found: {_key}", exc_info=x)
-
         log.info(f"[get|out] => {_result[0:3] if _result is not None else 'None'}")
         return _result
 
 
-class Configuration:
+class Singleton:
+    def __new__(cls, *args, **kwargs):
+        instance = cls.__dict__.get("__instance__", None)
+        if instance is None:
+            instance = cls.__instance__ = object.__new__(cls)
+            for key, value in kwargs.items():
+                setattr(instance, f"_{key}", value)
+        return instance
+
+
+class Configuration(Singleton):
 
     @staticmethod
-    def get_default(filesys_input: Union[list, str], variable_prefix: str = None):
-        return Configuration(filesys_input, additional_resolvers=[EnvironmentResolver()])
+    def factory(filesys_input: Union[list, str], variable_prefix: str = None,
+                az_keyvault_config: Optional[dict] = None, env_vars=True):
+        additional_resolvers = []
+        if az_keyvault_config is not None:
+            additional_resolvers.append(AzureKeyVaultResolver(az_keyvault_config))
+        if env_vars:
+            additional_resolvers.append(EnvironmentResolver())
 
-    @staticmethod
-    def get_default_with_azure_keyvault(filesys_input: Union[list, str], tenant_id: str, client_id: str,
-                                        client_secret: str, vault_url: str, variable_prefix: str = None):
-        return Configuration(filesys_input, additional_resolvers=[AzureKeyVaultResolver(tenant_id, client_id,
-                                                                                        client_secret, vault_url),
-                                                                  EnvironmentResolver()])
+        return Configuration(filesys_input, additional_resolvers=additional_resolvers)
 
     def __init__(self, filesys_input: Union[list, str], variable_prefix: str = None,
                  additional_resolvers: list = [], ):
@@ -170,6 +195,3 @@ class FileSysHandler:
 
         log.info(f"[__init__|out] => {self.__data}")
         return self.__data
-
-
-

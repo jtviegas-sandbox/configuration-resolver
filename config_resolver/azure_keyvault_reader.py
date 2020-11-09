@@ -15,6 +15,7 @@ class AzureKeyVaultReader:
 
     def get_secret(self, key: str):
         log.info(f"[get_secret|in] ({key})")
-        _result = self.client.get_secret(key)
-        log.info(f"[get_secret|out] => {_result[0:3]}")
+        _result = self.client.get_secret(key).value
+        log.info(f"[get_secret|out] => {_result}")
+        return _result
 
