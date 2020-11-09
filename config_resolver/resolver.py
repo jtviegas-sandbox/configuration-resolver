@@ -22,22 +22,22 @@ class Configuration(Singleton):
 
     @staticmethod
     def get_instance(filesys_input: Union[list, str], variable_prefix: str = None,
-                az_keyvault_config: Optional[dict] = None, env_vars=True):
+                az_keyvault_config: Optional[dict] = None, env_vars=True, base_vars: Optional[dict] = None):
         additional_resolvers = []
         if az_keyvault_config is not None:
             additional_resolvers.append(AzureKeyVaultResolver(az_keyvault_config))
         if env_vars:
             additional_resolvers.append(EnvironmentResolver())
 
-        return Configuration(filesys_input, additional_resolvers=additional_resolvers)
+        return Configuration(filesys_input, additional_resolvers=additional_resolvers, base_vars=base_vars)
 
     def __init__(self, filesys_input: Union[list, str], variable_prefix: str = None,
-                 additional_resolvers: list = [], ):
+                 additional_resolvers: list = [], base_vars: Optional[dict] = None):
         log.info(f"[__init__|in] ({filesys_input},{variable_prefix},{additional_resolvers})")
 
         self.__var_prefix = variable_prefix
         self.__input = {'filesys_input': filesys_input}
-        self.__data = {}
+        self.__data = base_vars if base_vars is not None else {}
 
         self.__data.update(FileSysConfiguration(filesys_input, variable_prefix).read())
 
