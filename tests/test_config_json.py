@@ -103,3 +103,10 @@ def test_base_vars_dict():
     _expected_dict = {"default": {"retry_delay": 5}}
     _expected_json = json.dumps(_expected_dict)
     assert json.dumps(impl.get("dag")) == json.dumps(impl.get("DAG")) == _expected_json
+
+
+def test_base_vars_dict_composition():
+    impl = Configuration(JSON_FILE, base_vars={"server": {"resources": {"cpu": "1xc"}}, "id": 1})
+    _expected_dict = {"cpu": "1xc", "mem": 2048}
+    _expected_json = json.dumps(_expected_dict)
+    assert json.dumps(impl.get("server.resources")) == json.dumps(impl.get("SERVER_RESOURCES")) == _expected_json

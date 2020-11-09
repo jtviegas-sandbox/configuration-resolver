@@ -4,6 +4,7 @@ from typing import Union, Optional
 from config_resolver.filesys_configuration import FileSysConfiguration
 from config_resolver.resolvers.azure_keyvault.azure_keyvault_resolver import AzureKeyVaultResolver
 from config_resolver.resolvers.environment.environment_resolver import EnvironmentResolver
+from config_resolver.resolvers.utils_dict import merge_dict, flatten_dict
 
 log = logging.getLogger(__name__)
 
@@ -38,9 +39,12 @@ class Configuration(Singleton):
         self.__input = {'filesys_input': filesys_input}
         self.__data = {}
         if base_vars is not None:
-            self.__process_base_vars(base_vars)
+            merge_dict(base_vars, self.__data)
 
-        self.__data.update(FileSysConfiguration(filesys_input).read())
+        self.__data.update(FileSysConfiguration(filesys_input, self.__data).read())
+        flattened = {}
+        flatten_dict(self.__data, flattened)
+        self.__data.update(flattened)
 
         for resolver in additional_resolvers:
             for key in self.__data.keys():
@@ -49,19 +53,6 @@ class Configuration(Singleton):
                     self.__data[key] = _val
 
         log.info(f"[__init__|out]")
-
-    def __process_base_vars(self, base_vars, prefix: str = None) -> dict:
-        log.info(f"[__process_base_vars|in] ({base_vars})")
-        for k in base_vars.keys():
-            value = base_vars[k]
-            input_type = type(value).__name__
-            var_name = f"{'' if prefix is None else prefix.upper() + '_'}{k.upper()}"
-            if input_type == 'dict':
-                self.__process_base_vars(value, var_name)
-
-            log.info(f"[__process_base_vars] adding new config {var_name}: {value}")
-            self.__data[var_name] = value
-        log.info(f"[__process_base_vars|out] => {self.__data}")
 
     def get(self, key: str):
         log.info(f"[get|in] ({key})")

@@ -3,15 +3,17 @@ import logging
 import os
 from typing import Union
 
+from config_resolver.resolvers.utils_dict import merge_dict
+
 log = logging.getLogger(__name__)
 
 
 class FileSysConfiguration:
 
-    def __init__(self, fs_refs: Union[list, str]):
+    def __init__(self, fs_refs: Union[list, str], data: dict = None):
         log.info(f"[__init__|in] ({fs_refs})")
         self.__fs_refs = fs_refs
-        self.__data = {}
+        self.__data = {} if data is None else data
         log.info(f"[__init__|out]")
 
     def read(self) -> str:
@@ -38,24 +40,9 @@ class FileSysConfiguration:
 
         with open(source) as json_file:
             # json content is in itself a dict
-            self.__process_dict(json.load(json_file), None)
+            merge_dict(json.load(json_file), self.__data)
 
         log.info(f"[process_file|out]")
-
-    def __process_dict(self, source: str, prefix: str):
-        log.info(f"[process_dict|in] ({source},{prefix})")
-
-        for k in source.keys():
-            value = source[k]
-            input_type = type(value).__name__
-            var_name = f"{'' if prefix is None else prefix.upper() + '_'}{k.upper()}"
-            if input_type == 'dict':
-                self.__process_dict(value, var_name)
-
-            log.info(f"[process_dict] adding new config {var_name}: {value}")
-            self.__data[var_name] = value
-
-        log.info(f"[process_dict|out]")
 
     def __handle_array(self, source: list):
         log.info(f"[handle_array|in] ({source})")
