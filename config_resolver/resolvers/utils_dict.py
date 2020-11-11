@@ -46,3 +46,28 @@ def flatten_dict(source: dict, target: dict, prefix: str = None):
         target[new_flattened_key] = value
 
     log.info(f"[flatten_dict|out] => {source}")
+
+
+def merge_flattened(source: dict, target: dict):
+    log.info(f"[merge_flattened|in] ({source}, {target})")
+
+    for key, value in source.items():
+        components = key.split(sep="_")
+        dict_pointer = target
+        match = False
+        for index, component in enumerate(components):
+            new_key = component.lower()
+            if new_key not in dict_pointer.keys():
+                match = False
+                break
+            elif index == len(components) - 1 :
+                # last one
+                match = True
+            else:
+                dict_pointer = dict_pointer[new_key]
+                match = True
+
+        if match:
+            dict_pointer[new_key] = value
+
+    log.info(f"[merge_flattened|out] => {target}")

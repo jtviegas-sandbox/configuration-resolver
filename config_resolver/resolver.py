@@ -4,7 +4,7 @@ from typing import Union, Optional
 from config_resolver.filesys_configuration import FileSysConfiguration
 from config_resolver.resolvers.azure_keyvault.azure_keyvault_resolver import AzureKeyVaultResolver
 from config_resolver.resolvers.environment.environment_resolver import EnvironmentResolver
-from config_resolver.resolvers.utils_dict import merge_dict, flatten_dict
+from config_resolver.resolvers.utils_dict import merge_dict, flatten_dict, merge_flattened
 
 log = logging.getLogger(__name__)
 
@@ -23,17 +23,24 @@ class Configuration(Singleton):
 
     @staticmethod
     def get_instance(filesys_input: Union[list, str],
-                az_keyvault_config: Optional[dict] = None, env_vars=True, base_vars: Optional[dict] = None):
-        additional_resolvers = []
-        if az_keyvault_config is not None:
-            additional_resolvers.append(AzureKeyVaultResolver(az_keyvault_config))
-        if env_vars:
-            additional_resolvers.append(EnvironmentResolver())
+                az_keyvault_config: Optional[dict] = None, env_vars=True, base_vars: Optional[dict] = None,
+                     additional_resolvers: list = [], merge_flatenned:bool = True):
 
-        return Configuration(filesys_input, additional_resolvers=additional_resolvers, base_vars=base_vars)
+        resolvers = []
+        if az_keyvault_config is not None:
+            resolvers.append(AzureKeyVaultResolver(az_keyvault_config))
+
+        for resolver in additional_resolvers:
+            resolvers.append(resolver)
+
+        if env_vars:
+            resolvers.append(EnvironmentResolver())
+
+        return Configuration(filesys_input, additional_resolvers=resolvers, base_vars=base_vars,
+                             merge_flatenned=merge_flatenned)
 
     def __init__(self, filesys_input: Union[list, str], additional_resolvers: list = [],
-                 base_vars: Optional[dict] = None):
+                 base_vars: Optional[dict] = None, merge_flatenned:bool = True):
         log.info(f"[__init__|in] ({filesys_input},{additional_resolvers},{base_vars})")
 
         self.__input = {'filesys_input': filesys_input}
@@ -51,6 +58,8 @@ class Configuration(Singleton):
                 _val = resolver.get(key)
                 if _val is not None:
                     self.__data[key] = _val
+                    if merge_flatenned:
+                        merge_flattened({key: _val}, self.__data)
 
         log.info(f"[__init__|out]")
 

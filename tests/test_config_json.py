@@ -4,6 +4,7 @@ import pytest
 import os
 import json
 
+from config_resolver.resolvers.abstract_resolver import AbstractResolver
 from config_resolver.resolvers.azure_keyvault.azure_keyvault_reader import AzureKeyVaultReader
 from config_resolver.resolver import Configuration, EnvironmentResolver
 
@@ -14,6 +15,17 @@ AZURE_CLIENT_ID="d4478504-2d43-4cb1-ba06-b413a1c12bf0"
 AZURE_KEYVAULT_URL="https://config-resolver-dev.vault.azure.net/"
 AZURE_CLIENT_SECRET="dummy"
 
+class DummyResolver(AbstractResolver):
+
+    def __init__(self, key: str, value: str):
+        self.__key = key
+        self.__value = value
+
+    def get(self, key) -> str:
+        _result = None
+        if key == self.__key:
+            _result = self.__value
+        return _result
 
 def test_type_error():
     with pytest.raises(TypeError) as x:
@@ -76,7 +88,7 @@ def test_override_by_secret():
                           'client_secret': AZURE_CLIENT_SECRET}
     with patch.object(AzureKeyVaultReader, 'get_secret', autospec=True) as mock_keyvault:
         mock_keyvault.return_value = '4096'
-        impl = Configuration.get_instance(JSON_FILE, az_keyvault_config=az_keyvault_config)
+        impl = Configuration.get_instance(JSON_FILE, az_keyvault_config=az_keyvault_config, merge_flatenned=False)
         assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '4096'
 
 
@@ -89,8 +101,16 @@ def test_override_by_environment():
         with patch.object(EnvironmentResolver, 'get', autospec=True) as mock_env:
             mock_keyvault.return_value = '4096'
             mock_env.return_value = '9192'
-            impl = Configuration.get_instance(JSON_FILE, az_keyvault_config=az_keyvault_config)
+            impl = Configuration.get_instance(JSON_FILE, az_keyvault_config=az_keyvault_config, merge_flatenned=False)
             assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '9192'
+
+
+def test_override_by_environment_check_dict():
+    impl = Configuration.get_instance(JSON_FILE, base_vars={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
+                                      additional_resolvers=[DummyResolver("SERVER_RESOURCES_MEM", "9192")])
+    expected = {"cpu": "1xc", "mem": "9192"}
+    assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '9192'
+    assert impl.get("server.resources") == impl.get("SERVER_RESOURCES") == expected
 
 
 def test_base_vars_depth():
@@ -110,3 +130,6 @@ def test_base_vars_dict_composition():
     _expected_dict = {"cpu": "1xc", "mem": 2048}
     _expected_json = json.dumps(_expected_dict)
     assert json.dumps(impl.get("server.resources")) == json.dumps(impl.get("SERVER_RESOURCES")) == _expected_json
+
+
+
