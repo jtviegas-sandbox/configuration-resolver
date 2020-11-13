@@ -1,6 +1,6 @@
 import json
 
-from config_resolver.resolvers.utils_dict import merge_dict, flatten_dict, merge_flattened
+from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened
 
 
 def test_merge():

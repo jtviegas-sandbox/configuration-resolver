@@ -1,10 +1,12 @@
 import logging
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from config_resolver.filesys_configuration import FileSysConfiguration
-from config_resolver.resolvers.azure_keyvault.azure_keyvault_resolver import AzureKeyVaultResolver
-from config_resolver.resolvers.environment.environment_resolver import EnvironmentResolver
-from config_resolver.resolvers.utils_dict import merge_dict, flatten_dict, merge_flattened
+from config_resolver.overriders.abstract_overrider import AbstractOverrider
+from config_resolver.overriders.azure_keyvault.azure_keyvault_overrider import AzureKeyVaultOverrider
+from config_resolver.overriders.databricks_keyvault.databricks_keyvault_overrider import SparkKeyVaultOverrider
+from config_resolver.overriders.environment.environment_overrider import EnvironmentOverrider
+from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened
 
 log = logging.getLogger(__name__)
 
@@ -22,56 +24,57 @@ class Singleton:
 class Configuration(Singleton):
 
     @staticmethod
-    def get_instance(filesys_input: Union[list, str],
-                az_keyvault_config: Optional[dict] = None, env_vars=True, base_vars: Optional[dict] = None,
-                     additional_resolvers: list = [], merge_flatenned:bool = True):
+    def get_instance(files: Union[list, str], variables: Optional[dict] = None,
+                     spark_keyvault_config: Optional[dict] = None, azure_keyvault_config: Optional[dict] = None,
+                     variable_overriders: List[AbstractOverrider] = [],
+                     environment_prevalence: bool = True, merge_flatenned_variables: bool = True):
 
-        resolvers = []
-        if az_keyvault_config is not None:
-            resolvers.append(AzureKeyVaultResolver(az_keyvault_config))
+        if azure_keyvault_config is not None:
+            variable_overriders.append(AzureKeyVaultOverrider(azure_keyvault_config))
 
-        for resolver in additional_resolvers:
-            resolvers.append(resolver)
+        if spark_keyvault_config:
+            variable_overriders.append(SparkKeyVaultOverrider(spark_keyvault_config))
 
-        if env_vars:
-            resolvers.append(EnvironmentResolver())
+        overriders = [*variable_overriders]
+        if environment_prevalence:
+            overriders.append(EnvironmentOverrider())
 
-        return Configuration(filesys_input, additional_resolvers=resolvers, base_vars=base_vars,
-                             merge_flatenned=merge_flatenned)
+        return Configuration(files, overriders=overriders, variables=variables,
+                             merge_flatenned=merge_flatenned_variables)
 
-    def __init__(self, filesys_input: Union[list, str], additional_resolvers: list = [],
-                 base_vars: Optional[dict] = None, merge_flatenned:bool = True):
-        log.info(f"[__init__|in] ({filesys_input},{additional_resolvers},{base_vars})")
+    def __init__(self, files: Union[list, str], variables: Optional[dict] = None,
+                 overriders: List[AbstractOverrider] = [], merge_flatenned: bool = True):
+        log.info(f"[__init__|in] ({files},{variables},{overriders},{merge_flatenned})")
 
-        self.__input = {'filesys_input': filesys_input}
         self.__data = {}
-        if base_vars is not None:
-            merge_dict(base_vars, self.__data)
+        if variables is not None:
+            """why merge? because that's the way of adding and we are well behaved"""
+            merge_dict(variables, self.__data)
 
-        self.__data.update(FileSysConfiguration(filesys_input, self.__data).read())
+        self.__data.update(FileSysConfiguration(files, self.__data).read())
         flattened = {}
         flatten_dict(self.__data, flattened)
         self.__data.update(flattened)
 
-        for resolver in additional_resolvers:
+        for overrider in overriders:
             for key in self.__data.keys():
-                _val = resolver.get(key)
-                if _val is not None:
-                    self.__data[key] = _val
+                val = overrider.get(key)
+                if val is not None:
+                    self.__data[key] = val
                     if merge_flatenned:
-                        merge_flattened({key: _val}, self.__data)
+                        merge_flattened({key: val}, self.__data)
 
         log.info(f"[__init__|out]")
 
     def get(self, key: str):
         log.info(f"[get|in] ({key})")
-        _result = None
-        _key = key.upper().replace('.', '_')
+        result = None
+        key_upper = key.upper().replace('.', '_')
 
-        if _key not in self.__data.keys():
+        if key_upper not in self.__data.keys():
             raise LookupError(f"key {key} not found")
-        _result = self.__data[_key]
-        log.info(f"[get|out] => {_result}")
-        return _result
+        result = self.__data[key_upper]
+        log.info(f"[get|out] => {result}")
+        return result
 
 
