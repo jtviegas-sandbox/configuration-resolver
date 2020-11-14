@@ -139,14 +139,16 @@ def test_base_vars_dict_composition():
 
 def test_filter_key():
     impl = Configuration.get_instance(JSON_FILE, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
-                                      config_file_filter_key="server")
+                                      config_file_filter_keys=["server", "dev"],
+                                      variable_overriders=[DummyOverrider("BIG_PSWD", "notdummy")])
     expected = {"cpu": "1xc"}
     assert impl.get("server.resources") == impl.get("SERVER_RESOURCES") == expected
+    assert impl.get("VAR1") == "aix"
 
 
 def test_filter_key_no_key():
     with pytest.raises(LookupError) as x:
         impl = Configuration.get_instance(JSON_FILE, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
-                                          config_file_filter_key="server")
+                                          config_file_filter_keys=["server"])
         impl.get("SERVER_RESOURCES_MEM")
     assert "key SERVER_RESOURCES_MEM not found" == str(x.value)

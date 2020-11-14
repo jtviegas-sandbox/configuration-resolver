@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Union
+from typing import Union, List
 
 from config_resolver.overriders.utils_dict import merge_dict
 
@@ -10,11 +10,11 @@ log = logging.getLogger(__name__)
 
 class FileSysConfiguration:
 
-    def __init__(self, fs_refs: Union[list, str], data: dict = None, filter_key: str = None):
+    def __init__(self, fs_refs: Union[list, str], data: dict = None, filter_keys: List[str] = []):
         log.info(f"[__init__|in] ({fs_refs})")
         self.__fs_refs = fs_refs
         self.__data = {} if data is None else data
-        self.__filter_key = filter_key
+        self.__filter_keys = filter_keys
         log.info(f"[__init__|out]")
 
     def read(self) -> str:
@@ -42,8 +42,16 @@ class FileSysConfiguration:
         with open(source) as json_file:
             # json content is in itself a dict
             content = json.load(json_file)
-            if self.__filter_key:
-                content = content[self.__filter_key]
+            if 0 < len(self.__filter_keys):
+                filtered_content = {}
+                for filter_key in self.__filter_keys:
+                    filtered_entry = content[filter_key]
+                    filtered_entry_type = type(filtered_entry).__name__
+                    if filtered_entry_type != 'dict':
+                        raise ValueError(f"filter key:{filter_key} does not correspond to a nested dict")
+                    else:
+                        filtered_content.update(filtered_entry)
+                content = filtered_content
             merge_dict(content, self.__data)
 
         log.info(f"[process_file|out]")

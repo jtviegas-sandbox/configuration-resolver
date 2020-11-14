@@ -8,5 +8,8 @@
   "name": "myname",
   "id": 12345,
   "tags": ["server", "api"],
-  "big_pswd": "dummy"
+  "big_pswd": "dummy",
+  "dev": {
+    "var1": "aix"
+  }
 }

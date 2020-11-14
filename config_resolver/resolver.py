@@ -29,7 +29,7 @@ class Configuration(Singleton):
                      spark_keyvault_config: Optional[dict] = None, azure_keyvault_config: Optional[dict] = None,
                      variable_overriders: List[AbstractOverrider] = [],
                      environment_prevalence: bool = True, merge_flatenned_variables: bool = True,
-                     config_file_filter_key: str = None):
+                     config_file_filter_keys: List[str] = []):
 
         if azure_keyvault_config is not None:
             variable_overriders.append(AzureKeyVaultOverrider(azure_keyvault_config))
@@ -42,19 +42,19 @@ class Configuration(Singleton):
             overriders.append(EnvironmentOverrider())
 
         return Configuration(files, overriders=overriders, variables=variables,
-                             merge_flatenned=merge_flatenned_variables, config_file_filter_key=config_file_filter_key)
+                             merge_flatenned=merge_flatenned_variables, config_file_filter_keys=config_file_filter_keys)
 
     def __init__(self, files: Union[list, str], variables: Optional[dict] = None,
                  overriders: List[AbstractOverrider] = [], merge_flatenned: bool = True,
-                 config_file_filter_key: str = None):
-        log.info(f"[__init__|in] ({files},{variables},{overriders},{merge_flatenned}, {config_file_filter_key})")
+                 config_file_filter_keys: List[str] = []):
+        log.info(f"[__init__|in] ({files},{variables},{overriders},{merge_flatenned}, {config_file_filter_keys})")
 
         self.__data = {}
         if variables is not None:
             """why merge? because that's the way of adding and we are well behaved"""
             merge_dict(variables, self.__data)
 
-        self.__data.update(FileSysConfiguration(files, self.__data, config_file_filter_key).read())
+        self.__data.update(FileSysConfiguration(files, self.__data, config_file_filter_keys).read())
         flattened = {}
         flatten_dict(self.__data, flattened)
         self.__data.update(flattened)
