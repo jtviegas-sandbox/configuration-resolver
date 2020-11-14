@@ -120,9 +120,6 @@ def test_base_vars_depth():
     impl = Configuration(JSON_FILE, variables={"dag": {"default": {"retry_delay": 5}}, "id": 1})
     print(impl)
     assert impl.get("dag.default.retry_delay") == impl.get("DAG_DEFAULT_RETRY_DELAY") == 5
-    impl = Configuration(JSON_FILE, variables={"dag": {"default": {"retry_delay": 5}}, "id": 1})
-    print(impl)
-    assert impl.get("dag.default.retry_delay") == impl.get("DAG_DEFAULT_RETRY_DELAY") == 5
 
 
 def test_base_vars_dict():
@@ -138,5 +135,12 @@ def test_base_vars_dict_composition():
     _expected_json = json.dumps(_expected_dict)
     assert json.dumps(impl.get("server.resources")) == json.dumps(impl.get("SERVER_RESOURCES")) == _expected_json
 
-
+def test_override_by_environment_check_dict_2():
+    impl = Configuration.get_instance(JSON_FILE, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
+                                      variable_overriders=[DummyOverrider("SERVER_RESOURCES_MEM", "9192"),
+                                                           DummyOverrider("BIG_PSWD", "notdummy")])
+    expected = {"cpu": "1xc", "mem": "9192"}
+    assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '9192'
+    assert impl.get("server.resources") == impl.get("SERVER_RESOURCES") == expected
+    assert impl.get("big_pswd") == impl.get("BIG_PSWD") == "notdummy"
 

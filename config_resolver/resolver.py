@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Union, Optional, List
 
@@ -22,6 +23,14 @@ class Singleton:
 
 
 class Configuration(Singleton):
+
+    @staticmethod
+    def get_key_from_file(file: str, key: dict):
+        result = None
+        with open(file) as json_file:
+            data = json.load(json_file)
+            result = data[key]
+        return result
 
     @staticmethod
     def get_instance(files: Union[list, str], variables: Optional[dict] = None,
