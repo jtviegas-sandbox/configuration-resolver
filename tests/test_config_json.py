@@ -11,6 +11,7 @@ from config_resolver.resolver import Configuration
 
 RESOURCES_DIR = f"{os.path.dirname(os.path.realpath(__file__))}/resources"
 JSON_FILE = f"{RESOURCES_DIR}/config_01.json"
+JSON_FILES = [f"{RESOURCES_DIR}/config_01.json", f"{RESOURCES_DIR}/config_02.json"]
 AZURE_TENANT_ID="5a9a19f5-40ed-4f04-b7d0-09a3d36e87da"
 AZURE_CLIENT_ID="d4478504-2d43-4cb1-ba06-b413a1c12bf0"
 AZURE_KEYVAULT_URL="https://config-resolver-dev.vault.azure.net/"
@@ -152,3 +153,12 @@ def test_filter_key_no_key():
                                           config_file_filter_keys=["server"])
         impl.get("SERVER_RESOURCES_MEM")
     assert "key SERVER_RESOURCES_MEM not found" == str(x.value)
+
+
+def test_filter_key_multiple_sources():
+    impl = Configuration.get_instance(JSON_FILES, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
+                                      config_file_filter_keys=["server", "local"],
+                                      variable_overriders=[DummyOverrider("BIG_PSWD", "notdummy")])
+    expected = {"cpu": "1xc"}
+    assert impl.get("server.resources") == impl.get("SERVER_RESOURCES") == expected
+    assert impl.get("VAR1") == "zzs"

@@ -43,14 +43,16 @@ class FileSysConfiguration:
             # json content is in itself a dict
             content = json.load(json_file)
             if 0 < len(self.__filter_keys):
+                # we must filter first level keys in the dict
                 filtered_content = {}
                 for filter_key in self.__filter_keys:
-                    filtered_entry = content[filter_key]
-                    filtered_entry_type = type(filtered_entry).__name__
-                    if filtered_entry_type != 'dict':
-                        raise ValueError(f"filter key:{filter_key} does not correspond to a nested dict")
-                    else:
-                        filtered_content.update(filtered_entry)
+                    if filter_key in content.keys():
+                        filtered_entry = content[filter_key]
+                        filtered_entry_type = type(filtered_entry).__name__
+                        if filtered_entry_type != 'dict':
+                            raise ValueError(f"filter key:{filter_key} does not correspond to a nested dict")
+                        else:
+                            filtered_content.update(filtered_entry)
                 content = filtered_content
             merge_dict(content, self.__data)
 
