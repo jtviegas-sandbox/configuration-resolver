@@ -10,10 +10,11 @@ log = logging.getLogger(__name__)
 
 class FileSysConfiguration:
 
-    def __init__(self, fs_refs: Union[list, str], data: dict = None):
+    def __init__(self, fs_refs: Union[list, str], data: dict = None, filter_key: str = None):
         log.info(f"[__init__|in] ({fs_refs})")
         self.__fs_refs = fs_refs
         self.__data = {} if data is None else data
+        self.__filter_key = filter_key
         log.info(f"[__init__|out]")
 
     def read(self) -> str:
@@ -40,7 +41,10 @@ class FileSysConfiguration:
 
         with open(source) as json_file:
             # json content is in itself a dict
-            merge_dict(json.load(json_file), self.__data)
+            content = json.load(json_file)
+            if self.__filter_key:
+                content = content[self.__filter_key]
+            merge_dict(content, self.__data)
 
         log.info(f"[process_file|out]")
 

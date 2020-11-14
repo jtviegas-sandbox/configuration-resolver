@@ -25,18 +25,11 @@ class Singleton:
 class Configuration(Singleton):
 
     @staticmethod
-    def get_key_from_file(file: str, key: dict):
-        result = None
-        with open(file) as json_file:
-            data = json.load(json_file)
-            result = data[key]
-        return result
-
-    @staticmethod
     def get_instance(files: Union[list, str], variables: Optional[dict] = None,
                      spark_keyvault_config: Optional[dict] = None, azure_keyvault_config: Optional[dict] = None,
                      variable_overriders: List[AbstractOverrider] = [],
-                     environment_prevalence: bool = True, merge_flatenned_variables: bool = True):
+                     environment_prevalence: bool = True, merge_flatenned_variables: bool = True,
+                     config_file_filter_key: str = None):
 
         if azure_keyvault_config is not None:
             variable_overriders.append(AzureKeyVaultOverrider(azure_keyvault_config))
@@ -49,18 +42,19 @@ class Configuration(Singleton):
             overriders.append(EnvironmentOverrider())
 
         return Configuration(files, overriders=overriders, variables=variables,
-                             merge_flatenned=merge_flatenned_variables)
+                             merge_flatenned=merge_flatenned_variables, config_file_filter_key=config_file_filter_key)
 
     def __init__(self, files: Union[list, str], variables: Optional[dict] = None,
-                 overriders: List[AbstractOverrider] = [], merge_flatenned: bool = True):
-        log.info(f"[__init__|in] ({files},{variables},{overriders},{merge_flatenned})")
+                 overriders: List[AbstractOverrider] = [], merge_flatenned: bool = True,
+                 config_file_filter_key: str = None):
+        log.info(f"[__init__|in] ({files},{variables},{overriders},{merge_flatenned}, {config_file_filter_key})")
 
         self.__data = {}
         if variables is not None:
             """why merge? because that's the way of adding and we are well behaved"""
             merge_dict(variables, self.__data)
 
-        self.__data.update(FileSysConfiguration(files, self.__data).read())
+        self.__data.update(FileSysConfiguration(files, self.__data, config_file_filter_key).read())
         flattened = {}
         flatten_dict(self.__data, flattened)
         self.__data.update(flattened)

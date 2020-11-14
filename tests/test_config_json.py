@@ -28,6 +28,7 @@ class DummyOverrider(AbstractOverrider):
             _result = self.__value
         return _result
 
+
 def test_type_error():
     with pytest.raises(TypeError) as x:
         Configuration.get_instance(1234)
@@ -135,12 +136,17 @@ def test_base_vars_dict_composition():
     _expected_json = json.dumps(_expected_dict)
     assert json.dumps(impl.get("server.resources")) == json.dumps(impl.get("SERVER_RESOURCES")) == _expected_json
 
-def test_override_by_environment_check_dict_2():
-    impl = Configuration.get_instance(JSON_FILE, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
-                                      variable_overriders=[DummyOverrider("SERVER_RESOURCES_MEM", "9192"),
-                                                           DummyOverrider("BIG_PSWD", "notdummy")])
-    expected = {"cpu": "1xc", "mem": "9192"}
-    assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '9192'
-    assert impl.get("server.resources") == impl.get("SERVER_RESOURCES") == expected
-    assert impl.get("big_pswd") == impl.get("BIG_PSWD") == "notdummy"
 
+def test_filter_key():
+    impl = Configuration.get_instance(JSON_FILE, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
+                                      config_file_filter_key="server")
+    expected = {"cpu": "1xc"}
+    assert impl.get("server.resources") == impl.get("SERVER_RESOURCES") == expected
+
+
+def test_filter_key_no_key():
+    with pytest.raises(LookupError) as x:
+        impl = Configuration.get_instance(JSON_FILE, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
+                                          config_file_filter_key="server")
+        impl.get("SERVER_RESOURCES_MEM")
+    assert "key SERVER_RESOURCES_MEM not found" == str(x.value)
