@@ -157,8 +157,10 @@ def test_filter_key_no_key():
 
 def test_filter_key_multiple_sources():
     impl = Configuration.get_instance(JSON_FILES, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
-                                      config_file_filter_keys=["server", "local"],
+                                      config_file_filter_keys=["server", "local", "common"],
                                       variable_overriders=[DummyOverrider("BIG_PSWD", "notdummy")])
     expected = {"cpu": "1xc"}
     assert impl.get("server.resources") == impl.get("SERVER_RESOURCES") == expected
     assert impl.get("VAR1") == "zzs"
+    assert impl.get("VAR3") == "SILVER"
+    assert impl.get("VAR4") == "water"

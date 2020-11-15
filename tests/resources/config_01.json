@@ -11,5 +11,9 @@
   "big_pswd": "dummy",
   "dev": {
     "var1": "aix"
+  },
+  "common": {
+    "var3": "GOLD",
+    "var4": "water"
   }
 }
