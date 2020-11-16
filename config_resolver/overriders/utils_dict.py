@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 log = logging.getLogger(__name__)
 
@@ -71,3 +72,53 @@ def merge_flattened(source: dict, target: dict):
             dict_pointer[new_key] = value
 
     log.info(f"[merge_flattened|out] => {target}")
+
+
+def find_config_entries(config: str, target: dict):
+    log.info(f"[find_config_entries|in] ({config}, {target})")
+    find_result = []
+    variable = config.upper()
+    if 0 == config.count('.'):
+        find_variable(config, target, find_result)
+    else:
+        find_property(config, target, find_result)
+        variable = config.replace('.', '_').upper()
+
+    if 1 < len(find_result):
+        raise Exception("can't have more than one result, please review your configuration source")
+
+    result = [{'pointer': target, 'key': variable}, *find_result]
+
+    log.info(f"[find_config_entries|out] => {result}")
+    return result
+
+def find_variable(var: str, target: dict, result: List[dict]):
+    log.info(f"[find_variable|in] ({var}, {target}, {result})")
+
+    components = var.split(sep="_")
+    query=''
+    for index, component in enumerate(components):
+        query += component.lower() if 0 == len(query) else '_' + component.lower()
+        if query in target.keys():
+            if index + 1 == len(components):
+                result.append( {'pointer': target, 'key': query} )
+            else:
+                find_variable( '_'.join(components[index+1:]), target[query], result)
+
+    log.info(f"[find_variable|out] => {result}")
+
+
+def find_property(key: str, target: dict, result: List[dict]):
+    log.info(f"[find_property|in] ({key}, {target}, {result})")
+
+    components = key.split(sep=".")
+
+    for index, component in enumerate(components):
+
+        if component in target.keys():
+            if index + 1 == len(components):
+                result.append( {'pointer': target, 'key': component} )
+            else:
+                find_property( '.'.join(components[index+1:]), target[component], result)
+
+    log.info(f"[find_property|out] => {result}")

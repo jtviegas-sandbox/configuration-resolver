@@ -7,7 +7,7 @@ from config_resolver.overriders.abstract_overrider import AbstractOverrider
 from config_resolver.overriders.azure_keyvault.azure_keyvault_overrider import AzureKeyVaultOverrider
 from config_resolver.overriders.databricks_keyvault.databricks_keyvault_overrider import SparkKeyVaultOverrider
 from config_resolver.overriders.environment.environment_overrider import EnvironmentOverrider
-from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened
+from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened, find_config_entries
 
 log = logging.getLogger(__name__)
 
@@ -63,9 +63,13 @@ class Configuration(Singleton):
             for key in self.__data.keys():
                 val = overrider.get(key)
                 if val is not None:
-                    self.__data[key] = val
-                    if merge_flatenned:
-                        merge_flattened({key: val}, self.__data)
+                    for entry in find_config_entries(key, self.__data):
+                        entry_pointer = entry['pointer']
+                        entry_key = entry['key']
+                        entry_pointer[entry_key] = val
+
+#                    if merge_flatenned:
+#                        merge_flattened({key: val}, self.__data)
 
         log.info(f"[__init__|out]")
 

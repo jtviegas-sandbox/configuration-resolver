@@ -1,6 +1,9 @@
 import json
 
-from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened
+import pytest
+
+from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened, find_variable, \
+    find_property, find_config_entries
 
 
 def test_merge():
@@ -36,3 +39,36 @@ def test_merge_flattened():
     sorted_output = {k[0]: k[1] for k in sorted(actual.items())}
     assert sorted_output == expected
 
+
+def test_find_variable():
+    d = {"var1": {"big_pswd": {"cpu": "1xc"}, "big": {"pswd": "1234"}}}
+    result = []
+    find_variable("VAR1_BIG_PSWD", d, result)
+    assert 2 == len(result)
+
+
+def test_find_property():
+    d = {"var1": {"big_pswd": {"cpu": "1xc"}, "big": {"pswd": "1234"}}}
+    result = []
+    find_property("var1.big_pswd", d, result)
+    assert 1 == len(result)
+    result = []
+    find_property("var1.big_pswd.cpu", d, result)
+    assert 1 == len(result)
+    result = []
+    find_property("var1.big.pswd", d, result)
+    assert 1 == len(result)
+
+
+def test_config_entries_too_many():
+    d = {"var1": {"big_pswd": {"cpu": "1xc"}, "big": {"pswd": "1234"}}}
+    with pytest.raises(Exception) as x:
+        find_config_entries("VAR1_BIG_PSWD", d)
+        assert "can't have more than one result, please review your configuration source" \
+               == str(x.value)
+
+
+def test_config_entries():
+    d = {"var1": {"big_pswd": {"cpu": "1xc"}, "big": {"pswdx": "1234"}}}
+    result = find_config_entries("VAR1_BIG_PSWD", d)
+    assert 2 == len(result)

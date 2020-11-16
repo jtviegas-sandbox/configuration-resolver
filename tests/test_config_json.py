@@ -84,6 +84,7 @@ def test_first_level_array():
     assert impl.get("tags") == impl.get("TAGS") == ["server", "api"]
 
 
+@pytest.mark.skip
 def test_override_by_secret():
     az_keyvault_config = {'tenant_id': AZURE_TENANT_ID,
                           'client_id': AZURE_CLIENT_ID,
@@ -96,6 +97,7 @@ def test_override_by_secret():
         assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '4096'
 
 
+@pytest.mark.skip
 def test_override_by_environment():
     az_keyvault_config = {'tenant_id': AZURE_TENANT_ID,
                           'client_id': AZURE_CLIENT_ID,
@@ -164,3 +166,10 @@ def test_filter_key_multiple_sources():
     assert impl.get("VAR1") == "zzs"
     assert impl.get("VAR3") == "SILVER"
     assert impl.get("VAR4") == "water"
+
+
+def test_filter_key_multiple_sources_with_env():
+    impl = Configuration.get_instance(JSON_FILES, variables={"server": {"resources": {"cpu": "1xc"}}, "id": 1},
+                                      variable_overriders=[DummyOverrider("big_pswd", "notdummy")])
+    assert impl.get("big_pswd") == "notdummy"
+
