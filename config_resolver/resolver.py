@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Union, Optional, List
 
@@ -7,7 +6,7 @@ from config_resolver.overriders.abstract_overrider import AbstractOverrider
 from config_resolver.overriders.azure_keyvault.azure_keyvault_overrider import AzureKeyVaultOverrider
 from config_resolver.overriders.databricks_keyvault.databricks_keyvault_overrider import SparkKeyVaultOverrider
 from config_resolver.overriders.environment.environment_overrider import EnvironmentOverrider
-from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened, find_config_entries
+from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, find_config_entries
 
 log = logging.getLogger(__name__)
 
