@@ -1,2 +1,2 @@
-"""package: config_resolver"""
-__version__ = '0.0.14'
+"""package: configuration_resolver"""
+__version__ = '0.0.15'
