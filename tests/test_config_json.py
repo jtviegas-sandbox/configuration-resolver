@@ -9,10 +9,6 @@ from config_resolver.resolver import Configuration
 RESOURCES_DIR = f"{os.path.dirname(os.path.realpath(__file__))}/resources"
 JSON_FILE = f"{RESOURCES_DIR}/config_01.json"
 JSON_FILES = [f"{RESOURCES_DIR}/config_01.json", f"{RESOURCES_DIR}/config_02.json"]
-AZURE_TENANT_ID="5a9a19f5-40ed-4f04-b7d0-09a3d36e87da"
-AZURE_CLIENT_ID="d4478504-2d43-4cb1-ba06-b413a1c12bf0"
-AZURE_KEYVAULT_URL="https://config-resolver-dev.vault.azure.net/"
-AZURE_CLIENT_SECRET="dummy"
 
 
 class DummyOverrider(AbstractOverrider):
