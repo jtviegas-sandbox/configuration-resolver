@@ -4,7 +4,7 @@ import os
 import pytest
 from configuration_overrider.abstract_overrider import AbstractOverrider
 
-from config_resolver.resolver import Configuration
+from configuration_resolver.resolver import Configuration
 
 RESOURCES_DIR = f"{os.path.dirname(os.path.realpath(__file__))}/resources"
 JSON_FILE = f"{RESOURCES_DIR}/config_01.json"

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened, find_variable, \
+from configuration_resolver.overriders.utils_dict import merge_dict, flatten_dict, merge_flattened, find_variable, \
     find_property, find_config_entries
 
 

@@ -3,9 +3,9 @@ from typing import Union, Optional, List
 
 from configuration_overrider.abstract_overrider import AbstractOverrider
 
-from config_resolver.filesys_configuration import FileSysConfiguration
-from config_resolver.overriders.environment.environment_overrider import EnvironmentOverrider
-from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, find_config_entries
+from configuration_resolver.filesys_configuration import FileSysConfiguration
+from configuration_resolver.overriders.environment.environment_overrider import EnvironmentOverrider
+from configuration_resolver.overriders.utils_dict import merge_dict, flatten_dict, find_config_entries
 
 log = logging.getLogger(__name__)
 

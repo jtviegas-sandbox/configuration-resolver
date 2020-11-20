@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Union, List
 
-from config_resolver.overriders.utils_dict import merge_dict
+from configuration_resolver.overriders.utils_dict import merge_dict
 
 log = logging.getLogger(__name__)
 
