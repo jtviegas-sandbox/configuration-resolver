@@ -92,6 +92,7 @@ def find_config_entries(config: str, target: dict):
     log.info(f"[find_config_entries|out] => {result}")
     return result
 
+
 def find_variable(var: str, target: dict, result: List[dict]):
     log.info(f"[find_variable|in] ({var}, {target}, {result})")
 

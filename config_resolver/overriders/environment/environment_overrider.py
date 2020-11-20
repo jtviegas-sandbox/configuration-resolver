@@ -1,7 +1,7 @@
 import logging
 import os
 
-from config_resolver.overriders.abstract_overrider import AbstractOverrider
+from configuration_overrider.abstract_overrider import AbstractOverrider
 
 log = logging.getLogger(__name__)
 

@@ -1,12 +1,9 @@
 import json
 import os
-from unittest.mock import patch
 
 import pytest
+from configuration_overrider.abstract_overrider import AbstractOverrider
 
-from config_resolver.overriders.abstract_overrider import AbstractOverrider
-from config_resolver.overriders.azure_keyvault.azure_keyvault_reader import AzureKeyVaultReader
-from config_resolver.overriders.environment.environment_overrider import EnvironmentOverrider
 from config_resolver.resolver import Configuration
 
 RESOURCES_DIR = f"{os.path.dirname(os.path.realpath(__file__))}/resources"
@@ -16,6 +13,7 @@ AZURE_TENANT_ID="5a9a19f5-40ed-4f04-b7d0-09a3d36e87da"
 AZURE_CLIENT_ID="d4478504-2d43-4cb1-ba06-b413a1c12bf0"
 AZURE_KEYVAULT_URL="https://config-resolver-dev.vault.azure.net/"
 AZURE_CLIENT_SECRET="dummy"
+
 
 class DummyOverrider(AbstractOverrider):
 
@@ -82,34 +80,6 @@ def test_first_level_number():
 def test_first_level_array():
     impl = Configuration(JSON_FILE)
     assert impl.get("tags") == impl.get("TAGS") == ["server", "api"]
-
-
-@pytest.mark.skip
-def test_override_by_secret():
-    az_keyvault_config = {'tenant_id': AZURE_TENANT_ID,
-                          'client_id': AZURE_CLIENT_ID,
-                          'vault_url': AZURE_KEYVAULT_URL,
-                          'client_secret': AZURE_CLIENT_SECRET}
-    with patch.object(AzureKeyVaultReader, 'get_secret', autospec=True) as mock_keyvault:
-        mock_keyvault.return_value = '4096'
-        impl = Configuration.get_instance(JSON_FILE, azure_keyvault_config=az_keyvault_config,
-                                          merge_flatenned_variables=False)
-        assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '4096'
-
-
-@pytest.mark.skip
-def test_override_by_environment():
-    az_keyvault_config = {'tenant_id': AZURE_TENANT_ID,
-                          'client_id': AZURE_CLIENT_ID,
-                          'vault_url': AZURE_KEYVAULT_URL,
-                          'client_secret': AZURE_CLIENT_SECRET}
-    with patch.object(AzureKeyVaultReader, 'get_secret', autospec=True) as mock_keyvault:
-        with patch.object(EnvironmentOverrider, 'get', autospec=True) as mock_env:
-            mock_keyvault.return_value = '4096'
-            mock_env.return_value = '9192'
-            impl = Configuration.get_instance(JSON_FILE, azure_keyvault_config=az_keyvault_config,
-                                              merge_flatenned_variables=False)
-            assert impl.get("server.resources.mem") == impl.get("SERVER_RESOURCES_MEM") == '9192'
 
 
 def test_override_by_environment_check_dict():

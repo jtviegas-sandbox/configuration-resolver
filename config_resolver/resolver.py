@@ -1,10 +1,9 @@
 import logging
 from typing import Union, Optional, List
 
+from configuration_overrider.abstract_overrider import AbstractOverrider
+
 from config_resolver.filesys_configuration import FileSysConfiguration
-from config_resolver.overriders.abstract_overrider import AbstractOverrider
-from config_resolver.overriders.azure_keyvault.azure_keyvault_overrider import AzureKeyVaultOverrider
-from config_resolver.overriders.databricks_keyvault.databricks_keyvault_overrider import SparkKeyVaultOverrider
 from config_resolver.overriders.environment.environment_overrider import EnvironmentOverrider
 from config_resolver.overriders.utils_dict import merge_dict, flatten_dict, find_config_entries
 
@@ -25,32 +24,23 @@ class Configuration(Singleton):
 
     @staticmethod
     def get_instance(files: Union[list, str], variables: Optional[dict] = None,
-                     spark_keyvault_config: Optional[dict] = None, azure_keyvault_config: Optional[dict] = None,
                      variable_overriders: List[AbstractOverrider] = [],
-                     environment_prevalence: bool = True, merge_flatenned_variables: bool = True,
-                     config_file_filter_keys: List[str] = []):
-
-        if azure_keyvault_config is not None:
-            variable_overriders.append(AzureKeyVaultOverrider(azure_keyvault_config))
-
-        if spark_keyvault_config:
-            variable_overriders.append(SparkKeyVaultOverrider(spark_keyvault_config))
+                     environment_prevalence: bool = True, config_file_filter_keys: List[str] = []):
 
         overriders = [*variable_overriders]
         if environment_prevalence:
             overriders.append(EnvironmentOverrider())
 
         return Configuration(files, overriders=overriders, variables=variables,
-                             merge_flatenned=merge_flatenned_variables, config_file_filter_keys=config_file_filter_keys)
+                             config_file_filter_keys=config_file_filter_keys)
 
     def __init__(self, files: Union[list, str], variables: Optional[dict] = None,
-                 overriders: List[AbstractOverrider] = [], merge_flatenned: bool = True,
+                 overriders: List[AbstractOverrider] = [],
                  config_file_filter_keys: List[str] = []):
-        log.info(f"[__init__|in] ({files},{variables},{overriders},{merge_flatenned}, {config_file_filter_keys})")
+        log.info(f"[__init__|in] ({files},{variables},{overriders}, {config_file_filter_keys})")
 
         self.__data = {}
         if variables is not None:
-            """why merge? because that's the way of adding and we are well behaved"""
             merge_dict(variables, self.__data)
 
         self.__data.update(FileSysConfiguration(files, self.__data, config_file_filter_keys).read())
@@ -66,9 +56,6 @@ class Configuration(Singleton):
                         entry_pointer = entry['pointer']
                         entry_key = entry['key']
                         entry_pointer[entry_key] = val
-
-#                    if merge_flatenned:
-#                        merge_flattened({key: val}, self.__data)
 
         log.info(f"[__init__|out]")
 
