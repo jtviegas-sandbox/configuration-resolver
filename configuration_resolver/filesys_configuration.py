@@ -52,7 +52,7 @@ class FileSysConfiguration:
                         if filtered_entry_type != 'dict':
                             raise ValueError(f"filter key:{filter_key} does not correspond to a nested dict")
                         else:
-                            filtered_content.update(filtered_entry)
+                            merge_dict(filtered_entry, filtered_content)
                 content = filtered_content
             merge_dict(content, self.__data)
 
