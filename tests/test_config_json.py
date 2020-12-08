@@ -11,25 +11,14 @@ JSON_FILE = f"{RESOURCES_DIR}/config_01.json"
 JSON_FILES = [f"{RESOURCES_DIR}/config_01.json", f"{RESOURCES_DIR}/config_02.json"]
 
 
-class DummyOverrider(AbstractOverrider):
-
-    def __init__(self, key: str, value: str):
-        self.__key = key
-        self.__value = value
-
-    def get(self, key) -> str:
-        _result = None
-        if key == self.__key:
-            _result = self.__value
-        return _result
-
-
+@pytest.mark.skip
 def test_type_error():
     with pytest.raises(TypeError) as x:
         Configuration.init(1234)
     assert "1234 is neither a list nor a string" == str(x.value)
 
 
+@pytest.mark.skip
 def test_value_error():
     with pytest.raises(ValueError) as x:
         Configuration.init("not_a_file")
@@ -37,9 +26,10 @@ def test_value_error():
 
 
 def test_one_level_dict():
-    impl = Configuration.init(JSON_FILES, variables={"dag": {"default": {"retry_delay": 5}}, "server": {"resources": {"cpu": "1xc"}}, "id": 1},
-                              config_file_filter_keys=["dev", "prod"],
-                              variable_overriders=[DummyOverrider("SERVER_RESOURCES_MEM", 9192), DummyOverrider("OTHER_VAR8", "STEEL")])
+    # impl = Configuration.init(JSON_FILES, variables={"dag": {"default": {"retry_delay": 5}}, "server": {"resources": {"cpu": "1xc"}}, "id": 1},
+    #                           config_file_filter_keys=["dev", "prod"],
+    #                           variable_overriders=[DummyOverrider("SERVER_RESOURCES_MEM", 9192), DummyOverrider("OTHER_VAR8", "STEEL")])
+    impl = Configuration.get_instance()
     assert impl.get("server.url") == impl.get("SERVER_URL") \
            == "http://www.site.com"
 
