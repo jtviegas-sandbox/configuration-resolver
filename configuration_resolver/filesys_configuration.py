@@ -10,14 +10,14 @@ log = logging.getLogger(__name__)
 
 class FileSysConfiguration:
 
-    def __init__(self, fs_refs: Union[list, str], data: dict = None, filter_keys: List[str] = []):
+    def __init__(self, fs_refs: Union[list, str], data: dict, filter_keys: List[str] = []):
         log.info(f"[__init__|in] ({fs_refs})")
         self.__fs_refs = fs_refs
-        self.__data = {} if data is None else data
+        self.__data = data
         self.__filter_keys = filter_keys
         log.info(f"[__init__|out]")
 
-    def read(self) -> str:
+    def read(self):
         log.info(f"[get|in]")
 
         input_type = type(self.__fs_refs).__name__
@@ -34,7 +34,6 @@ class FileSysConfiguration:
             raise TypeError(f"{self.__fs_refs} is neither a list nor a string")
 
         log.info(f"[get|out] => {self.__data}")
-        return self.__data
 
     def __process_file(self, source: str):
         log.info(f"[process_file|in] ({source})")

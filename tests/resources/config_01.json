@@ -1,19 +1,25 @@
 {
-  "server": {
-    "url": "http://www.site.com",
-    "resources": {
-      "mem": 2048
-    }
-  },
-  "name": "myname",
-  "id": 12345,
-  "tags": ["server", "api"],
-  "big_pswd": "dummy",
   "dev": {
-    "var1": "aix"
-  },
-  "common": {
-    "var3": "GOLD",
-    "var4": "water"
+    "server": {
+      "url": "http://www.site.com",
+      "resources": {
+        "mem": 2048,
+        "color": "yellow"
+      }
+    },
+    "name": "myname",
+    "id": 12345,
+    "tags": ["server", "api"],
+    "big_pswd": "dummy",
+    "dev": {
+      "var1": "aix"
+    },
+    "other": {
+      "var1": "GOLD",
+      "var4": "WOODEN",
+      "var5": "A",
+      "var6": "AIR",
+      "var8": "BLUE"
+    }
   }
 }

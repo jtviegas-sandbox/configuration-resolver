@@ -10,7 +10,28 @@ from configuration_resolver.overriders.utils_dict import merge_dict, flatten_dic
 log = logging.getLogger(__name__)
 
 
-class Singleton:
+class Configuration:
+
+    @staticmethod
+    def init(files: Union[list, str], variables: Optional[dict] = None,
+             variable_overriders: List[AbstractOverrider] = None,
+             environment_prevalence: bool = True, config_file_filter_keys: List[str] = None):
+
+        overriders = [*variable_overriders] if variable_overriders else []
+        if environment_prevalence:
+            overriders.append(EnvironmentOverrider())
+
+        return Configuration(files, overriders=overriders, variables=variables,
+                             config_file_filter_keys=config_file_filter_keys)
+
+    @staticmethod
+    def get_instance():
+
+        if "__instance__" in Configuration.__dict__.keys() and hasattr(Configuration.__instance__, '_Configuration__data'):
+            return Configuration.__instance__
+        else:
+            raise RuntimeError("singleton was not initialized")
+
     def __new__(cls, *args, **kwargs):
         instance = cls.__dict__.get("__instance__", None)
         if instance is None:
@@ -19,45 +40,39 @@ class Singleton:
                 setattr(instance, f"_{key}", value)
         return instance
 
-
-class Configuration(Singleton):
-
-    @staticmethod
-    def get_instance(files: Union[list, str], variables: Optional[dict] = None,
-                     variable_overriders: List[AbstractOverrider] = [],
-                     environment_prevalence: bool = True, config_file_filter_keys: List[str] = []):
-
-        overriders = [*variable_overriders]
-        if environment_prevalence:
-            overriders.append(EnvironmentOverrider())
-
-        return Configuration(files, overriders=overriders, variables=variables,
-                             config_file_filter_keys=config_file_filter_keys)
-
     def __init__(self, files: Union[list, str], variables: Optional[dict] = None,
-                 overriders: List[AbstractOverrider] = [],
-                 config_file_filter_keys: List[str] = []):
+                 overriders: List[AbstractOverrider] = None, config_file_filter_keys: List[str] = None):
         log.info(f"[__init__|in] ({files},{variables},{overriders}, {config_file_filter_keys})")
 
-        self.__data = {}
-        if variables is not None:
-            merge_dict(variables, self.__data)
+        if not hasattr(Configuration.__instance__, '_Configuration__data'):
+            self.__data = self._load(files, variables, overriders or [], config_file_filter_keys or [])
 
-        self.__data.update(FileSysConfiguration(files, self.__data, config_file_filter_keys).read())
+        log.info(f"[__init__|out]")
+
+    def _load(self, files: Union[list, str], variables: Optional[dict],
+              overriders: List[AbstractOverrider], config_file_filter_keys: List[str]) -> dict:
+        log.info(f"[_load|in] ({files},{variables},{overriders}, {config_file_filter_keys})")
+
+        data = {}
+        if variables is not None:
+            merge_dict(variables, data)
+
+        FileSysConfiguration(files, data, config_file_filter_keys).read()
         flattened = {}
-        flatten_dict(self.__data, flattened)
-        self.__data.update(flattened)
+        flatten_dict(data, flattened)
+        data.update(flattened)
 
         for overrider in overriders:
-            for key in self.__data.keys():
+            for key in data.keys():
                 val = overrider.get(key)
                 if val is not None:
-                    for entry in find_config_entries(key, self.__data):
+                    for entry in find_config_entries(key, data):
                         entry_pointer = entry['pointer']
                         entry_key = entry['key']
                         entry_pointer[entry_key] = val
 
-        log.info(f"[__init__|out]")
+        log.info(f"[_load|out] => {data}")
+        return data
 
     def get(self, key: str):
         log.info(f"[get|in] ({key})")

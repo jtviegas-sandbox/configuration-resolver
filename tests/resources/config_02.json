@@ -1,9 +1,28 @@
 {
-  "big_pswd": "stilldummy",
-  "local": {
-    "var1": "zzs"
+  "dev": {
+    "big_pswd": "stilldummy",
+    "local": {
+      "var1": "zzs"
+    },
+    "other": {
+      "var2": "SILVER",
+      "var4": "TIN",
+      "var5": "B",
+      "var7": "100"
+    }
   },
-  "common": {
-    "var3": "SILVER"
+  "prod": {
+    "server": {
+      "resources": {
+        "timeout": 6
+      }
+    },
+    "other": {
+      "var3": "BRONZE",
+      "var5": "C",
+      "var6": "WATER",
+      "var7": "1000",
+      "var8": "BIG"
+    }
   }
 }
