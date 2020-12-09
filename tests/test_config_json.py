@@ -2,7 +2,6 @@ import json
 import os
 
 import pytest
-from configuration_overrider.abstract_overrider import AbstractOverrider
 
 from configuration_resolver.resolver import Configuration
 
@@ -26,9 +25,6 @@ def test_value_error():
 
 
 def test_one_level_dict():
-    # impl = Configuration.init(JSON_FILES, variables={"dag": {"default": {"retry_delay": 5}}, "server": {"resources": {"cpu": "1xc"}}, "id": 1},
-    #                           config_file_filter_keys=["dev", "prod"],
-    #                           variable_overriders=[DummyOverrider("SERVER_RESOURCES_MEM", 9192), DummyOverrider("OTHER_VAR8", "STEEL")])
     impl = Configuration.get_instance()
     assert impl.get("server.url") == impl.get("SERVER_URL") \
            == "http://www.site.com"
@@ -96,7 +92,7 @@ def test_filter_key_no_key():
 
 
 def test_filter_key_multiple_sources():
-    impl = Configuration.get_instance()
+    impl = Configuration()
     assert impl.get("OTHER_VAR1") == "GOLD"
     assert impl.get("OTHER_VAR2") == "SILVER"
     assert impl.get("OTHER_VAR3") == "BRONZE"

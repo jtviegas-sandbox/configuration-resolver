@@ -12,7 +12,16 @@ from configuration_resolver.overriders.utils_dict import merge_dict, flatten_dic
 log = logging.getLogger(__name__)
 
 
-class Configuration:
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(SingletonMeta, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class Configuration(metaclass=SingletonMeta):
 
     @staticmethod
     def init(files: Union[list, str], variables: Optional[dict] = None,
@@ -28,26 +37,15 @@ class Configuration:
 
     @staticmethod
     def get_instance():
+        return Configuration()
 
-        if "__instance__" in Configuration.__dict__.keys() and hasattr(Configuration.__instance__, '_Configuration__data'):
-            return Configuration.__instance__
-        else:
-            raise RuntimeError("singleton was not initialized")
-
-    def __new__(cls, *args, **kwargs):
-        instance = cls.__dict__.get("__instance__", None)
-        if instance is None:
-            instance = cls.__instance__ = object.__new__(cls)
-            for key, value in kwargs.items():
-                setattr(instance, f"_{key}", value)
-        return instance
 
     def __init__(self, files: Union[list, str], variables: Optional[dict] = None,
                  overriders: List[AbstractOverrider] = None, config_file_filter_keys: List[str] = None):
         log.info(f"[__init__|in] ({files},{variables},{overriders}, {config_file_filter_keys})")
 
-        if not hasattr(Configuration.__instance__, '_Configuration__data'):
-            self.__data = self._load(files, variables, overriders or [], config_file_filter_keys or [])
+        # if not hasattr(Configuration.__instance__, '_Configuration__data'):
+        self.__data = self._load(files, variables, overriders or [], config_file_filter_keys or [])
 
         log.info(f"[__init__|out]")
 
