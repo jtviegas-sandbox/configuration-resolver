@@ -3,11 +3,19 @@ import os
 
 import pytest
 
+from configuration_resolver.overriders.dummy.dummy_overrider import DummyOverrider
 from configuration_resolver.resolver import Configuration
 
 RESOURCES_DIR = f"{os.path.dirname(os.path.realpath(__file__))}/resources"
 JSON_FILE = f"{RESOURCES_DIR}/config_01.json"
 JSON_FILES = [f"{RESOURCES_DIR}/config_01.json", f"{RESOURCES_DIR}/config_02.json"]
+
+Configuration.init(JSON_FILES,
+                       variables={"dag": {"default": {"retry_delay": 5}}, "server": {"resources": {"cpu": "1xc"}},
+                                  "id": 1},
+                       config_file_filter_keys=["dev", "prod"],
+                       variable_overriders=[DummyOverrider("SERVER_RESOURCES_MEM", 9192),
+                                            DummyOverrider("OTHER_VAR8", "STEEL")])
 
 
 @pytest.mark.skip
